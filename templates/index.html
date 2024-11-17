@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Personal Assistant Agent</title>
+    <style>
+      /* General Styles */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+        color: #333;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* Chat Button Style */
+      #chatButton {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #4caf50;
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        font-size: 30px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        transition: background-color 0.3s;
+      }
+
+      #chatButton:hover {
+        background-color: #45a049;
+      }
+
+      /* Chat Window Style */
+      #chatWindow {
+        display: none;
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 300px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+        max-height: 70vh;
+      }
+
+      #chatHeader {
+        background-color: #4caf50;
+        color: #fff;
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+      }
+
+      #chatContent {
+        padding: 10px;
+        max-height: 60vh;
+        overflow-y: auto;
+      }
+
+      #userQuestion {
+        width: 80%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        box-sizing: border-box;
+        margin-top: 5px;
+      }
+
+      #sendButton {
+        background-color: #4caf50;
+        color: #fff;
+        border: none;
+        padding: 8px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        margin-top: 5px;
+      }
+
+      #sendButton:hover {
+        background-color: #45a049;
+      }
+
+      .result-section {
+        background-color: #f1f1f1;
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+        box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .result-section h3 {
+        color: #4caf50;
+      }
+
+      /* Close Button */
+      #closeChat {
+        float: right;
+        cursor: pointer;
+        color: #fff;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Chat Button -->
+    <button id="chatButton" onclick="toggleChat()">💬</button>
+
+    <!-- Chat Window -->
+    <div id="chatWindow">
+      <div id="chatHeader">
+        <span>Fitness Coach Bot</span>
+        <span id="closeChat" onclick="toggleChat()">✖</span>
+      </div>
+      <div id="chatContent">
+        <div id="chatMessages">
+          <!-- Initial Message -->
+          <div class="result-section">
+            <p>
+              <strong>Oleon:</strong> Hi! I'm Oleon, your intelligent personal
+              assistant. How can I help you today?
+            </p>
+          </div>
+        </div>
+
+        <!-- User Input Section -->
+        <input
+          type="text"
+          id="userQuestion"
+          placeholder="Type your question..."
+        />
+        <button id="sendButton" onclick="askQuestion()">Send</button>
+      </div>
+    </div>
+
+    <script>
+      // Toggle Chat Window
+      function toggleChat() {
+        const chatWindow = document.getElementById("chatWindow");
+        if (chatWindow.style.display === "none") {
+          chatWindow.style.display = "block";
+        } else {
+          chatWindow.style.display = "none";
+        }
+      }
+
+      // Ask Question Function
+      function askQuestion() {
+        const question = document.getElementById("userQuestion").value.trim();
+        const chatMessages = document.getElementById("chatMessages");
+
+        if (!question) return; // Do nothing if input is empty
+
+        // Add user's question to the chat
+        const userMessage = document.createElement("div");
+        userMessage.classList.add("result-section");
+        userMessage.innerHTML = `<p><strong>You:</strong> ${question}</p>`;
+        chatMessages.appendChild(userMessage);
+
+        // Clear input field
+        document.getElementById("userQuestion").value = "";
+
+        // Add "Typing..." indicator
+        const typingIndicator = document.createElement("div");
+        typingIndicator.id = "typingIndicator";
+        typingIndicator.classList.add("result-section");
+        typingIndicator.innerHTML = `<p><strong>Oleon:</strong> Typing...</p>`;
+        chatMessages.appendChild(typingIndicator);
+
+        // Scroll to the bottom of the chat
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        // Send question to backend
+        fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: question }),
+        })
+          .then((response) => {
+            // Remove "Typing..." indicator
+            typingIndicator.remove();
+
+            if (response.ok) {
+              return response.json();
+            } else {
+              return response.json().then((data) => {
+                throw new Error(data.error || "An unknown error occurred.");
+              });
+            }
+          })
+          .then((data) => {
+            // Display the bot's response
+            const botMessage = document.createElement("div");
+            botMessage.classList.add("result-section");
+            botMessage.innerHTML = `<p><strong>Oleon:</strong> ${data.response}</p>`;
+            chatMessages.appendChild(botMessage);
+
+            // Display the cost of the conversation
+            console.log("Estimated cost received: ", data.estimated_cost);
+            const costMessage = document.createElement("div");
+            costMessage.classList.add("result-section");
+            costMessage.innerHTML = `<p><strong>Cost:</strong> Estimated cost for this response is ${data.estimated_cost}</p>`;
+            chatMessages.appendChild(costMessage);
+
+            // Scroll to the bottom of the chat
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          })
+          .catch((error) => {
+            // Display error message
+            const errorMessage = document.createElement("div");
+            errorMessage.classList.add("result-section");
+            errorMessage.innerHTML = `<p><strong>Oleon:</strong> ${error.message}</p>`;
+            chatMessages.appendChild(errorMessage);
+          });
+      }
+    </script>
+  </body>
+</html>
