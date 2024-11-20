@@ -3,15 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dark Chat UI</title>
+    <title>Oleons Varient</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
       /* General Styles */
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap");
       body {
-        font-family: Arial, sans-serif;
-        background-color: #ffffff;
-        color: #fff;
+        font-family: "Roboto", sans-serif;
+        background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+        color: #333;
         margin: 0;
         padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
       }
 
       /* Chat Button Style */
@@ -19,48 +26,78 @@
         position: fixed;
         bottom: 20px;
         right: 20px;
-        background-color: #1f1f1f;
+        background: linear-gradient(135deg, #6c5ce7, #74b9ff);
         color: #fff;
         border: none;
         border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        font-size: 30px;
+        width: 70px;
+        height: 70px;
+        font-size: 28px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.6);
-        transition: background-color 0.3s, transform 0.2s;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+        z-index: 1000;
       }
 
       #chatButton:hover {
-        background-color: #333;
         transform: scale(1.1);
+        box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.3);
       }
 
       /* Chat Window Style */
       #chatWindow {
         display: none;
         position: fixed;
-        bottom: 90px;
+        bottom: 100px;
         right: 20px;
         width: 350px;
-        background-color: #1e1e1e;
-        border-radius: 10px;
-        box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.8);
+        background: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
         overflow: hidden;
-        max-height: 70vh;
+        max-height: 75vh;
         display: flex;
         flex-direction: column;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        z-index: 999;
+      }
+
+      #chatWindow.active {
+        display: flex;
+        opacity: 1;
+        transform: translateY(0);
       }
 
       #chatHeader {
-        background: linear-gradient(90deg, #494949, #2c2c2c);
+        background: linear-gradient(135deg, #6c5ce7, #74b9ff);
         color: #fff;
-        padding: 10px;
+        padding: 15px;
         text-align: center;
         font-weight: bold;
+        font-size: 18px;
+        position: relative;
+      }
+
+      #closeChat {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 18px;
+        cursor: pointer;
+        transition: opacity 0.3s ease;
+      }
+
+      #closeChat:hover {
+        opacity: 0.7;
       }
 
       #chatContent {
@@ -70,64 +107,65 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
-        background-color: #1e1e1e;
+        background: #f9f9f9;
       }
 
       #userQuestion {
-        width: 80%;
-        padding: 8px;
-        border: 1px solid #333;
-        border-radius: 5px;
-        background-color: #2e2e2e;
-        color: #fff;
+        width: calc(100% - 90px);
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        background: #f1f3f5;
+        color: #333;
         box-sizing: border-box;
+        outline: none;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+      }
+
+      #userQuestion:focus {
+        border-color: #6c5ce7;
       }
 
       #sendButton {
-        background: linear-gradient(90deg, #007bff, #5542fa);
+        background: linear-gradient(135deg, #00cec9, #81ecec);
         color: #fff;
         border: none;
-        padding: 8px;
-        border-radius: 15px;
+        padding: 10px 15px;
+        border-radius: 20px;
         cursor: pointer;
-        transition: background-color 0.3s;
-        width: 20%;
+        transition: all 0.3s ease;
+        font-size: 14px;
       }
 
       #sendButton:hover {
-        background-color: #45a049;
+        transform: scale(1.1);
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
       }
 
       /* Message Bubble Styles */
       .message {
         max-width: 70%;
-        padding: 10px;
-        border-radius: 10px;
+        padding: 12px;
+        border-radius: 12px;
         font-size: 14px;
-        line-height: 1.4;
-        box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.3);
+        line-height: 1.5;
+        box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+        animation: slideIn 0.3s ease;
       }
 
       .message.bot {
-        background-color: #2a2a2a;
+        background: #e3f2fd;
         align-self: flex-start;
         border-top-left-radius: 0;
-        color: #fff;
+        color: #333;
       }
 
       .message.user {
-        background-color: #5a5a5a;
-        color: #fff;
+        background: #d1c4e9;
+        color: #333;
         align-self: flex-end;
         border-top-right-radius: 0;
-      }
-
-      /* Close Button */
-      #closeChat {
-        float: right;
-        cursor: pointer;
-        color: #fff;
-        font-weight: bold;
       }
 
       /* Scrollbar Styling */
@@ -135,11 +173,31 @@
         width: 8px;
       }
       #chatContent::-webkit-scrollbar-thumb {
-        background: #555;
+        background: #6c5ce7;
         border-radius: 4px;
       }
       #chatContent::-webkit-scrollbar-thumb:hover {
-        background: #777;
+        background: #74b9ff;
+      }
+
+      /* Animations */
+      @keyframes slideIn {
+        0% {
+          opacity: 0;
+          transform: translateX(20px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      /* Responsive Design */
+      @media screen and (max-width: 480px) {
+        #chatWindow {
+          width: 90%;
+          right: 5%;
+        }
       }
     </style>
   </head>
@@ -151,7 +209,7 @@
     <div id="chatWindow">
       <div id="chatHeader">
         <span>Chat with Oleon</span>
-        <span id="closeChat" onclick="toggleChat()">✖</span>
+        <button id="closeChat" onclick="toggleChat()">✖</button>
       </div>
       <div id="chatContent">
         <div class="message bot">
@@ -160,7 +218,7 @@
       </div>
 
       <!-- User Input Section -->
-      <div style="display: flex; gap: 5px; padding: 10px;">
+      <div style="display: flex; gap: 10px; padding: 10px;">
         <input
           type="text"
           id="userQuestion"
@@ -174,19 +232,20 @@
       // Toggle Chat Window
       function toggleChat() {
         const chatWindow = document.getElementById("chatWindow");
-        if (chatWindow.style.display === "none" || chatWindow.style.display === "") {
-          chatWindow.style.display = "block";
-        } else {
-          chatWindow.style.display = "none";
-        }
+        chatWindow.classList.toggle("active");
       }
 
       // Ask Question Function
       function askQuestion() {
         const question = document.getElementById("userQuestion").value.trim();
         const chatContent = document.getElementById("chatContent");
+        const userInput = document.getElementById("userQuestion");
+        const sendButton = document.getElementById("sendButton");
 
         if (!question) return; // Do nothing if input is empty
+
+        userInput.disabled = true;
+        sendButton.disabled = true;
 
         // Add user's question to the chat
         const userMessage = document.createElement("div");
@@ -228,20 +287,40 @@
             // Display the bot's response
             const botMessage = document.createElement("div");
             botMessage.classList.add("message", "bot");
-            botMessage.textContent = data.response;
+            botMessage.innerHTML = marked.parse(data.response);
             chatContent.appendChild(botMessage);
 
             // Scroll to the bottom of the chat
             chatContent.scrollTop = chatContent.scrollHeight;
+
+            userInput.disabled = false;
+            sendButton.disabled = false;
+
+            userInput.focus();
           })
           .catch((error) => {
+            typingIndicator.remove();
             // Display error message
             const errorMessage = document.createElement("div");
             errorMessage.classList.add("message", "bot");
-            errorMessage.textContent = 'Ops! Something went wrong. Please try again.';
+            errorMessage.textContent = error.message;
             chatContent.appendChild(errorMessage);
+
+            chatContent.scrollTop = chatContent.scrollHeight;
+
+            userInput.disabled = false;
+            sendButton.disabled = false;
+
+            // Set focus back to the input field
+            userInput.focus();
           });
       }
+
+      document.getElementById("userQuestion").addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+          askQuestion();
+        }
+      });
     </script>
   </body>
 </html>
